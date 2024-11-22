@@ -26,7 +26,7 @@ class BaseEmbed(Seeder, ABC):
         result = self.__class__.__name__
         result += '('
         if self.extra_search_dir:
-            result += f'extra_search_dir={', '.join((str(i) for i in self.extra_search_dir))},'
+            result += f'extra_search_dir={", ".join(str(i) for i in self.extra_search_dir)},'
         result += f'download={self.download},'
         for distribution in self.distributions():
             if getattr(self, f'no_{distribution}'):

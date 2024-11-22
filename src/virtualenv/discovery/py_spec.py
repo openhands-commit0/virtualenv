@@ -27,5 +27,6 @@ class PythonSpec:
     def __repr__(self) -> str:
         name = type(self).__name__
         params = ('implementation', 'major', 'minor', 'micro', 'architecture', 'path')
-        return f'{name}({', '.join((f'{k}={getattr(self, k)}' for k in params if getattr(self, k) is not None))})'
+        items = [f'{k}={getattr(self, k)}' for k in params if getattr(self, k) is not None]
+        return f'{name}({", ".join(items)})'
 __all__ = ['PythonSpec']
