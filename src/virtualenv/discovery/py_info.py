@@ -113,6 +113,21 @@ class PythonInfo:
     def __str__(self) -> str:
         return '{}({})'.format(self.__class__.__name__, ', '.join((f'{k}={v}' for k, v in (('spec', self.spec), ('system' if self.system_executable is not None and self.system_executable != self.executable else None, self.system_executable), ('original' if self.original_executable not in {self.system_executable, self.executable} else None, self.original_executable), ('exe', self.executable), ('platform', self.platform), ('version', repr(self.version)), ('encoding_fs_io', f'{self.file_system_encoding}-{self.stdout_encoding}')) if k is not None)))
 
+    def install_path(self, key):
+        """Get an installation path from sysconfig."""
+        if key == 'scripts':
+            if self.sysconfig_scheme == 'posix_prefix':
+                return 'bin'
+            return self.sysconfig_path(key)
+        return self.sysconfig_path(key)
+
+    def creators(self):
+        """Get the list of available virtual environment creators."""
+        if self._creators is None:
+            from virtualenv.run.plugin.creators import CreatorSelector
+            self._creators = CreatorSelector.for_interpreter(self)
+        return self._creators
+
     def satisfies(self, spec, impl_must_match):
         """Check if a given specification can be satisfied by the this python interpreter instance."""
         if spec.implementation is not None and impl_must_match and spec.implementation != self.implementation:
