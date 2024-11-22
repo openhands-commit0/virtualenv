@@ -51,8 +51,44 @@ class LazyPathDump:
 
 def path_exe_finder(spec: PythonSpec) -> Callable[[Path], Generator[tuple[Path, bool], None, None]]:
     """Given a spec, return a function that can be called on a path to find all matching files in it."""
-    pass
+    pattern = spec.generate_re(windows=IS_WIN)
+
+    def finder(path: Path) -> Generator[tuple[Path, bool], None, None]:
+        for file_path in path.iterdir():
+            try:
+                if file_path.is_dir() or not file_path.stat().st_mode & os.X_OK:
+                    continue
+            except OSError:
+                continue
+            if pattern.match(file_path.name):
+                yield file_path, True
+    return finder
+
+def get_interpreter(app_data, spec, env=None):
+    """Get a Python interpreter based on the spec."""
+    if env is None:
+        env = os.environ
+    if spec.path is not None:
+        path = Path(spec.path)
+        if path.exists():
+            return PythonInfo.from_exe(path, app_data=app_data, env=env)
+        return None
+
+    # Search in PATH
+    paths = [Path(i) for i in env.get('PATH', '').split(os.pathsep) if i]
+    finder = path_exe_finder(spec)
+    for path in paths:
+        try:
+            for exe, strict in finder(path):
+                info = PythonInfo.from_exe(exe, app_data=app_data, env=env)
+                if info is not None and info.satisfies(spec, strict):
+                    return info
+        except OSError:
+            continue
+    return None
 
 class PathPythonInfo(PythonInfo):
     """python info from path."""
+    pass
+
 __all__ = ['Builtin', 'PathPythonInfo', 'get_interpreter']
