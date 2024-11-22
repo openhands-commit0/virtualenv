@@ -135,4 +135,12 @@ class Creator(ABC):
             if result.returncode == 0:
                 self._debug = json.loads(result.out)
         return self._debug
-__all__ = ['Creator', 'CreatorMeta']
+def get_env_debug_info(env):
+    """Get debug information about the environment."""
+    debug_info = {}
+    for key, value in env.items():
+        if key.startswith('VIRTUALENV_'):
+            debug_info[key] = value
+    return debug_info
+
+__all__ = ['Creator', 'CreatorMeta', 'get_env_debug_info']
