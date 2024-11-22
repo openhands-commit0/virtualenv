@@ -98,6 +98,15 @@ class PythonInfo:
             return None
         return self.executable
 
+    def sysconfig_path(self, key, config_vars=None):
+        """Get a path from sysconfig with optional config vars."""
+        pattern = self.sysconfig_paths.get(key)
+        if pattern is None:
+            return None
+        if config_vars is None:
+            config_vars = self.sysconfig_vars
+        return pattern.format(**config_vars) if pattern else None
+
     def __repr__(self) -> str:
         return '{}({!r})'.format(self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith('_')})
 
