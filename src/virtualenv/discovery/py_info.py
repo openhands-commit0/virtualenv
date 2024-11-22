@@ -14,6 +14,14 @@ import sysconfig
 import warnings
 from collections import OrderedDict, namedtuple
 from string import digits
+
+def _get_path_extensions():
+    """Get the executable path extensions from the PATHEXT environment variable."""
+    if sys.platform == 'win32':
+        exts = os.environ.get('PATHEXT', '').split(os.pathsep)
+        return [i.lower() for i in exts], {i.lower() for i in exts}
+    return [], set()
+
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'micro', 'releaselevel', 'serial'])
 EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile('\\{\\w+\\}')
@@ -79,7 +87,15 @@ class PythonInfo:
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
-        pass
+        if self.base_prefix is None and self.base_exec_prefix is None:
+            return self.executable
+        if self.real_prefix is not None:
+            return self.executable
+        if self.prefix != self.base_prefix and self.base_prefix is not None:
+            return None
+        if self.exec_prefix != self.base_exec_prefix and self.base_exec_prefix is not None:
+            return None
+        return self.executable
 
     def __repr__(self) -> str:
         return '{}({!r})'.format(self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith('_')})
@@ -89,7 +105,15 @@ class PythonInfo:
 
     def satisfies(self, spec, impl_must_match):
         """Check if a given specification can be satisfied by the this python interpreter instance."""
-        pass
+        if spec.implementation is not None and impl_must_match and spec.implementation != self.implementation:
+            return False
+        if spec.architecture is not None and spec.architecture != self.architecture:
+            return False
+        for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
+            if req is not None and our is not None and our != req:
+                return False
+        return True
+
     _current_system = None
     _current = None
 
@@ -99,7 +123,9 @@ class PythonInfo:
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """
-        pass
+        if cls._current is None:
+            cls._current = cls()
+        return cls._current
 
     @classmethod
     def current_system(cls, app_data=None) -> PythonInfo:
@@ -107,12 +133,33 @@ class PythonInfo:
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """
-        pass
+        if cls._current_system is None:
+            cls._current_system = cls.from_exe(sys.executable, app_data=app_data)
+        return cls._current_system
 
     @classmethod
     def from_exe(cls, exe, app_data=None, raise_on_error=True, ignore_cache=False, resolve_to_host=True, env=None):
         """Given a path to an executable get the python information."""
-        pass
+        # First, check if we have this information cached
+        if not ignore_cache and exe in cls._cache_exe_discovery:
+            result = cls._cache_exe_discovery[exe]
+            if result is not None or not raise_on_error:
+                return result
+            msg = f'failed to get interpreter info for {exe}'
+            raise RuntimeError(msg)
+
+        # If not cached, create a new instance and cache it
+        try:
+            info = cls()
+            info.executable = exe
+            cls._cache_exe_discovery[exe] = info
+            return info
+        except Exception as exception:
+            cls._cache_exe_discovery[exe] = None
+            if raise_on_error:
+                raise
+            logging.error('failed to get interpreter info for %s because %r', exe, exception)
+            return None
     _cache_exe_discovery = {}
 if __name__ == '__main__':
     argv = sys.argv[1:]
