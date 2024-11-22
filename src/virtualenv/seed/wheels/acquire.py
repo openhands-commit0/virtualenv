@@ -74,4 +74,18 @@ def get_wheel(distribution, version, for_py_version, search_dirs, download, app_
 
     return None
 
-__all__ = ['download_wheel', 'get_wheel', 'pip_wheel_env_run']
+def find_compatible_in_house(distribution, version, wheels):
+    """Find a compatible wheel from a list of wheels."""
+    if not wheels:
+        return None
+
+    # Try to find an exact version match
+    for wheel in wheels:
+        if wheel.version == version:
+            return wheel
+
+    # If no exact match, try to find a compatible version
+    # For now, we'll just return the latest version
+    return max(wheels, key=lambda w: w.version)
+
+__all__ = ['download_wheel', 'find_compatible_in_house', 'get_wheel', 'pip_wheel_env_run']
