@@ -34,7 +34,7 @@ class BaseEmbed(Seeder, ABC):
             version = getattr(self, f'{distribution}_version', None)
             if version == 'none':
                 continue
-            ver = f'={version or 'latest'}'
+            ver = f'={version if version else "latest"}'
             result += f' {distribution}{ver},'
         return result[:-1] + ')'
 __all__ = ['BaseEmbed']
