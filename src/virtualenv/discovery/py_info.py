@@ -50,6 +50,7 @@ class PythonInfo:
         self.executable = abs_path(sys.executable)
         self.original_executable = abs_path(self.executable)
         self.system_executable = self._fast_get_system_executable()
+        self.system_prefix = self.base_prefix if self.base_prefix is not None else self.prefix
         try:
             __import__('venv')
             has = True
