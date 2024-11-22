@@ -19,7 +19,8 @@ class VirtualEnvOptions(Namespace):
         super().__setattr__(key, value)
 
     def __repr__(self) -> str:
-        return f'{type(self).__name__}({', '.join((f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')))})'
+        items = [f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_')]
+        return f'{type(self).__name__}({", ".join(items)})'
 
 class VirtualEnvConfigParser(ArgumentParser):
     """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
