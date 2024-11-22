@@ -12,5 +12,5 @@ class _Debug:
         self.dest = dest
 
     def __str__(self) -> str:
-        return f'{('directory ' if self.src.is_dir() else '')}{self.src!s} to {self.dest!s}'
+        return f'{"directory " if self.src.is_dir() else ""}{self.src!s} to {self.dest!s}'
 __all__ = ['copy', 'copytree', 'ensure_dir', 'safe_delete', 'symlink', 'symlink']
